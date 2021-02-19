@@ -156,6 +156,8 @@ static void ustream_ssl_free(struct ustream *s)
 	uloop_timeout_cancel(&us->error_timer);
 	__ustream_ssl_session_free(us->ssl);
 	free(us->peer_cn);
+	free(us->peer_cert);
+	free(us->peer_cert_sn);
 
 	us->ctx = NULL;
 	us->ssl = NULL;
@@ -198,6 +200,9 @@ static int _ustream_ssl_init(struct ustream_ssl *us, struct ustream *conn, struc
 	us->server = server;
 	us->conn = conn;
 	us->ctx = ctx;
+
+	us->peer_cert = NULL;
+	us->peer_cert_sn = NULL;
 
 	us->ssl = __ustream_ssl_session_new(us->ctx);
 	if (!us->ssl)

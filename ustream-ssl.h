@@ -43,6 +43,10 @@ struct ustream_ssl {
 	bool valid_cert;
 	bool valid_cn;
 	bool require_validation;
+
+	char *peer_cert;
+	char  peer_cert_sha256[65];
+	char *peer_cert_sn;
 };
 
 struct ustream_ssl_ctx;

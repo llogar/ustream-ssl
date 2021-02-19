@@ -267,6 +267,10 @@ static void ustream_ssl_verify_cert(struct ustream_ssl *us)
 	void *ssl = us->ssl;
 	X509 *cert;
 	int res;
+	BIO *bio;
+	char *ptr;
+	int len;
+	unsigned char md[32];
 
 	res = SSL_get_verify_result(ssl);
 	if (res != X509_V_OK) {
@@ -281,6 +285,24 @@ static void ustream_ssl_verify_cert(struct ustream_ssl *us)
 
 	us->valid_cert = true;
 	us->valid_cn = ustream_ssl_verify_cn(us, cert);
+
+	bio = BIO_new(BIO_s_mem());
+	PEM_write_bio_X509(bio, cert);
+	len = BIO_get_mem_data(bio, &ptr);
+	us->peer_cert = calloc(1, len + 1);
+	memcpy(us->peer_cert, ptr, len);
+	BIO_free(bio);
+
+	X509_digest(cert, EVP_sha256(), md, NULL);
+	for (int n = 0; n < 32; n++)
+		sprintf(&us->peer_cert_sha256[2*n], "%02X", md[n]);
+
+	bio = BIO_new(BIO_s_mem());
+	X509_NAME_print_ex(bio, X509_get_subject_name(cert), 0, 0);
+	len = BIO_get_mem_data(bio, &ptr);
+	us->peer_cert_sn = calloc(1, len + 1);
+	memcpy(us->peer_cert_sn, ptr, len);
+	BIO_free(bio);
 
 	X509_free(cert);
 }
